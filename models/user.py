@@ -11,6 +11,7 @@ class UserModel(db.Model):
     password = db.Column(db.String(80))
     OTP = db.Column(db.String(6))
     token_gen_time = db.Column(db.String(80))
+    token_exp_time = db.Column(db.String(80))
 
     def __init__(self, username, password, full_name, mobile_number, email_id):
         self.username = username

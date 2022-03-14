@@ -204,6 +204,7 @@ class Forgot(Resource):
                 key=('sunil_secret_key')
             )
             email.token_gen_time = datetime.now()
+            email.token_exp_time = email.token_gen_time + timedelta(minutes=5)
             email.save_to_db()
             return {"reset password token": f"{reset_password_token.decode('utf-8')}"}
 
@@ -226,19 +227,22 @@ class Reset(Resource):
     )
     def post(self):
         data = Reset.parser.parse_args()
-        current_date = datetime.now() - timedelta(minutes=5)
+        current_time = datetime.now()
         
         if data:
             token = data['access_token']
             token_data = jwt.decode(token,key='sunil_secret_key',algorithms=['HS256',])
             username = token_data['username']
         username = UserModel.find_by_username(username)
-        if (str(current_date) >= username.token_gen_time):
+        # token_gent = (username.token_gen_time + timedelta(minutes=5))
+        if (str(current_time) >= username.token_exp_time):
             return {"message": "Your token has expired, please generate a new one."}
         if username is None:
             return {"message": "Invalid token!!"}, 401
         elif data['new_password'] == data['confirm_new_password']:
             username.password = data['new_password']
+            # token_gentime = username.token_gen_time + timedelta(minutes=5)
+            username.token_exp_time = current_time
         else:
             return {"message": "Please enter 'new password' and 'confirm new password' same"}
 
@@ -288,10 +292,14 @@ class UpdateUserDetails(Resource):
             if data['mobile_number'] is None:
                 username.mobile_number = username.mobile_number
             else:
+                if UserModel.find_by_mobile_number(data['mobile_number']):
+                    return {"message": "Mobile number is already Registered."}, 400
                 username.mobile_number = data['mobile_number']
             if data['email_id'] is None:
                 username.email_id = username.email_id
             else:
+                if UserModel.find_by_email_id(data['email_id']):
+                    return {"message": "Email id is already Registered."}, 400
                 username.email_id = data['email_id']
         username.save_to_db()
 
