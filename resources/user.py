@@ -4,6 +4,7 @@ import jwt
 import random
 import math
 from datetime import datetime, timedelta
+import re
 
 
 # user registration
@@ -43,6 +44,15 @@ class UserRegister(Resource):
             return {"message": "Mobile number is already Registered."}, 400
         if UserModel.find_by_email_id(data['email_id']):
             return {"message": "Email id is already Registered."}, 400
+       
+        match_email = re.findall(r'[\w]+[@][\w]+[.][\w]+', data['email_id'])
+        match_mobile = re.findall(r'\d{10}', data['mobile_number'])
+        mobile_len = len(data['mobile_number'])
+        if match_email == []:
+            return {"message": "Please enter a valid email address!"}
+        if match_mobile == [] or mobile_len != 10:
+            return {"message": "Please enter a valid mobile number!"}
+        
 
         user = UserModel(**data)
         user.save_to_db()
